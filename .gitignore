@@ -1,0 +1,31 @@
+# weights (download separately — see weights/README.md)
+weights/*.pt
+weights/*.pth
+weights/*.ckpt
+weights/*.onnx
+
+# vendored third-party checkouts (see third_party/README.md)
+third_party/BoT-SORT/
+third_party/AdaFace/
+
+# outputs — never commit (may contain face crops / geometry / PII)
+out/
+*.json
+*.3DI
+*.3DI.json
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# editor / os
+.vscode/
+.idea/
+.DS_Store
