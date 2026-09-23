@@ -22,3 +22,8 @@ filterpy>=1.4.5
 loguru>=0.6.0
 PyYAML>=5.3.1
 easydict>=1.9
+
+#extra
+yacs
+termcolor
+faiss-gpu-cu12
