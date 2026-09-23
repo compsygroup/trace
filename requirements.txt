@@ -24,6 +24,6 @@ PyYAML>=5.3.1
 easydict>=1.9
 
 #extra
-yacs
-termcolor
-faiss-gpu-cu12
+yacs>=0.1.8
+termcolor>=1.1.0
+faiss-gpu-cu12>=1.7.4
