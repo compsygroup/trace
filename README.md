@@ -4,11 +4,7 @@
 
 Face detection, identity tracking, and 68-point landmarks for video. It detects
 faces in each frame, assigns a stable track id to each person across the clip, and
-outputs per-frame bounding boxes and landmarks. It does not do any quality/FIQA
-scoring; the output is boxes and landmarks for a downstream stage to use.
-
-It is the tracking part of a larger FaceQA pipeline, pulled out and made
-general (no "pick the mother/parent" logic, no quality models).
+outputs per-frame bounding boxes and landmarks.
 
 ## Pipeline
 
@@ -137,4 +133,3 @@ that output unless you undistort with the same camera model first.
 
 - Landmarks in the JSON are iBUG-68 in full-frame coordinates; the `.3DI` export
   keeps the 51-point inner-face subset.
-- Quality/FIQA scoring is not part of this repo.

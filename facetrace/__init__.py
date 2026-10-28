@@ -1,7 +1,6 @@
 """facetrace — face detection + identity tracking + 68-point landmarks.
 
-A general-purpose tracking front-end (no quality/FIQA scoring). Import the
-high-level entry point directly:
+Import the high-level entry point directly:
 
     from facetrace import run_tracking, save_result
     result = run_tracking("clip.mp4")

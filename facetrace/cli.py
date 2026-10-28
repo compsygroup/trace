@@ -14,7 +14,7 @@ from facetrace.export_3di import export_3di
 def main(argv=None):
     ap = argparse.ArgumentParser(
         prog="facetrace",
-        description="Face detection + identity tracking + 68-point landmarks (no FIQA).")
+        description="Face detection + identity tracking + 68-point landmarks.")
     ap.add_argument("videos", nargs="+", type=Path, help="input video file(s)")
     ap.add_argument("-o", "--out", type=Path, default=Path("out"),
                     help="output directory for <stem>_tracks.json (default: ./out)")
