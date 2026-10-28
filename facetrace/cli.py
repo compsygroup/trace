@@ -1,19 +1,19 @@
-"""CLI: python -m facetrack.cli VIDEO [VIDEO ...] -o OUT_DIR"""
+"""CLI: python -m facetrace.cli VIDEO [VIDEO ...] -o OUT_DIR"""
 import argparse
 import sys
 from pathlib import Path
 
-from facetrack.config import (
+from facetrace.config import (
     DEFAULT_SAMPLE_FPS, DEFAULT_MIN_BOX_AREA, DEFAULT_MERGE_THRESHOLD, DEFAULT_MIN_FRAMES,
 )
-from facetrack.pipeline import run_tracking, save_result
-from facetrack.models import get_models
-from facetrack.export_3di import export_3di
+from facetrace.pipeline import run_tracking, save_result
+from facetrace.models import get_models
+from facetrace.export_3di import export_3di
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(
-        prog="facetrack",
+        prog="facetrace",
         description="Face detection + identity tracking + 68-point landmarks (no FIQA).")
     ap.add_argument("videos", nargs="+", type=Path, help="input video file(s)")
     ap.add_argument("-o", "--out", type=Path, default=Path("out"),
@@ -43,7 +43,7 @@ def main(argv=None):
             print(f"[skip] not found: {video}", file=sys.stderr)
             rc = 1
             continue
-        print(f"[facetrack] {video.name}", flush=True)
+        print(f"[facetrace] {video.name}", flush=True)
         try:
             result = run_tracking(
                 video, sample_fps=args.sample_fps, min_box_area=args.min_box_area,

@@ -8,12 +8,12 @@ import cv2
 import numpy as np
 import torch
 
-from facetrack.config import (
+from facetrace.config import (
     DEFAULT_SAMPLE_FPS, DEFAULT_MIN_BOX_AREA, DEFAULT_MERGE_THRESHOLD, DEFAULT_MIN_FRAMES,
 )
-from facetrack.landmarks import pipnet_lm68, lm68_to_5pt, align_arcface, img_b64
-from facetrack.models import get_models, build_tracker
-from facetrack.track_merger import merge_same_person_tracks
+from facetrace.landmarks import pipnet_lm68, lm68_to_5pt, align_arcface, img_b64
+from facetrace.models import get_models, build_tracker
+from facetrace.track_merger import merge_same_person_tracks
 
 
 def _empty_result(video_path, duration, width, height, sample_fps, src_fps, frame_count):

@@ -13,6 +13,6 @@ on first use — nothing to place here for landmarks.
 ## Overriding paths
 
 ```bash
-export FACETRACK_YOLO=/path/to/yolov8n-face.pt
-export FACETRACK_ADAFACE=/path/to/adaface_ir50_ms1mv2.ckpt
+export TRACE_YOLO=/path/to/yolov8n-face.pt
+export TRACE_ADAFACE=/path/to/adaface_ir50_ms1mv2.ckpt
 ```

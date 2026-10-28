@@ -3,7 +3,7 @@
 Run outputs land here by default:
 
 ```bash
-python -m facetrack.cli your_clip.mp4 -o examples/
+python -m facetrace.cli your_clip.mp4 -o examples/
 ```
 
 `*_tracks.json` files are git-ignored — they can contain face-crop thumbnails

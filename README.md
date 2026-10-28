@@ -1,4 +1,6 @@
-# facetrack
+# TRACE
+
+**T**rack, **R**e-identify, **A**lign, **C**lean, **E**xport.
 
 Face detection, identity tracking, and 68-point landmarks for video. It detects
 faces in each frame, assigns a stable track id to each person across the clip, and
@@ -32,9 +34,9 @@ pip install -r requirements.txt          # install torch/torchvision for your CU
 Command line:
 
 ```bash
-python -m facetrack.cli clip.mp4 -o out/
-python -m facetrack.cli videos/*.mp4 -o out/ --sample-fps 5 --min-box-area 1500
-python -m facetrack.cli clip.mp4 -o out/ --no-3di            # tracks JSON only
+python -m facetrace.cli clip.mp4 -o out/
+python -m facetrace.cli videos/*.mp4 -o out/ --sample-fps 5 --min-box-area 1500
+python -m facetrace.cli clip.mp4 -o out/ --no-3di            # tracks JSON only
 ```
 
 Per video it writes `out/<stem>_tracks.json` plus the 3DI/bitbox files
@@ -43,7 +45,7 @@ Per video it writes `out/<stem>_tracks.json` plus the 3DI/bitbox files
 Python:
 
 ```python
-from facetrack import run_tracking, save_result
+from facetrace import run_tracking, save_result
 
 result = run_tracking("clip.mp4", sample_fps=5, min_box_area=1500)
 save_result(result, "clip_tracks.json")
@@ -89,8 +91,8 @@ Arrays are frame-aligned: index `i` is the `i`-th sampled frame of that track.
 ## Layout
 
 ```
-facetrack/
-├── facetrack/
+trace/
+├── facetrace/
 │   ├── config.py        # paths, tracker params, ArcFace/landmark constants
 │   ├── models.py        # load YOLO + BoT-SORT/AdaFace + PIPNet
 │   ├── landmarks.py     # PIPNet 68-pt + ArcFace alignment
@@ -105,7 +107,7 @@ facetrack/
 ## 3DI / bitbox export
 
 By default the CLI writes one file pair per identity (`<tid>` is the track id);
-`--no-3di` disables it, and `facetrack.export_3di.export_3di(result, out_dir)`
+`--no-3di` disables it, and `facetrace.export_3di.export_3di(result, out_dir)`
 does the same from Python:
 
 | file | content |

@@ -11,16 +11,16 @@ clone_or_link () {
   name="$1"; url="$2"
   if [ -d "$TP/$name" ]; then
     echo "[skip] $TP/$name already present"
-  elif [ -n "${FACETRACK_LOCAL_SRC:-}" ] && [ -d "$FACETRACK_LOCAL_SRC/$name" ]; then
-    ln -s "$FACETRACK_LOCAL_SRC/$name" "$TP/$name"
-    echo "[link] $TP/$name -> $FACETRACK_LOCAL_SRC/$name"
+  elif [ -n "${TRACE_LOCAL_SRC:-}" ] && [ -d "$TRACE_LOCAL_SRC/$name" ]; then
+    ln -s "$TRACE_LOCAL_SRC/$name" "$TP/$name"
+    echo "[link] $TP/$name -> $TRACE_LOCAL_SRC/$name"
   else
     git clone --depth 1 "$url" "$TP/$name"
     echo "[clone] $TP/$name"
   fi
 }
 
-# Set FACETRACK_LOCAL_SRC=/path/to/existing/repo to symlink local copies instead of cloning.
+# Set TRACE_LOCAL_SRC=/path/to/existing/repo to symlink local copies instead of cloning.
 clone_or_link "BoT-SORT" "https://github.com/NirAharon/BoT-SORT.git"
 clone_or_link "AdaFace"  "https://github.com/mk-minchul/AdaFace.git"
 

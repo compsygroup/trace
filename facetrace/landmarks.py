@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from skimage import transform as sk_trans
 
-from facetrack.config import (
+from facetrace.config import (
     ARCFACE_REF, PIP_TF,
     LM68_LEFT_EYE, LM68_RIGHT_EYE, LM68_NOSE_TIP, LM68_MOUTH_L, LM68_MOUTH_R,
 )

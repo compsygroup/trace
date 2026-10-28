@@ -6,9 +6,9 @@ import cv2
 import numpy as np
 import torch
 
-import facetrack.compat  # noqa: F401  — before the vendored imports
+import facetrace.compat  # noqa: F401  — before the vendored imports
 
-from facetrack.config import (
+from facetrace.config import (
     ADAFACE_CKPT, YOLO_PT, BOTSORT_ROOT, ADAFACE_ROOT, botsort_args,
 )
 
