@@ -26,7 +26,7 @@ easydict>=1.9
 #extra
 yacs>=0.1.8
 termcolor>=1.1.0
-faiss-gpu-cu12<=1.8.0.2
+faiss-gpu==1.7.4
 tabulate
 tensorboard
 pytorch-lightning
