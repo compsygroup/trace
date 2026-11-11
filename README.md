@@ -53,7 +53,7 @@ save_result(result, "clip_tracks.json")
   "video": "clip.mp4",
   "duration": 55.0,              // seconds
   "frame_size": [1920, 1080],
-  "src_fps": 30.0,              // native fps from container metadata
+  "src_fps": 30.0,              // native fps from container metadata; null if missing
   "frame_count": 9000,          // frames processed
   "start_frame": 9000,          // segment start in the full video (round(start * src_fps))
   "end_frame": 18000,           // segment end (exclusive); frame i here = full-video frame start_frame + i

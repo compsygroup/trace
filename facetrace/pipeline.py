@@ -1,5 +1,6 @@
 """Detection -> tracking (ReID) -> landmarks -> identity merge, per video."""
 import json
+import warnings
 import statistics
 from collections import defaultdict
 from pathlib import Path
@@ -55,11 +56,15 @@ def run_tracking(video_path, start=None, end=None,
     tracker = build_tracker(m, min_box_area, device)
 
     cap = cv2.VideoCapture(str(video_path))
-    src_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+    meta_fps = cap.get(cv2.CAP_PROP_FPS) or None  # written to the output as-is
+    if meta_fps is None:
+        warnings.warn(f"{video_path.name}: no fps in metadata; src_fps/duration set to null, "
+                      "track merging assumes 30 fps")
+    src_fps = meta_fps or 30.0  # internal only: merger time gates
     n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    if (start is not None or end is not None) and not cap.get(cv2.CAP_PROP_FPS):
+    if (start is not None or end is not None) and meta_fps is None:
         raise ValueError(f"{video_path.name}: no fps in metadata, cannot convert start/end times")
     start_frame = round(start * src_fps) if start is not None else 0
     end_frame = round(end * src_fps) if end is not None else None
@@ -143,11 +148,11 @@ def run_tracking(video_path, start=None, end=None,
 
     cap.release()
     frame_count = frame_idx
-    duration = max(frame_count / src_fps, 1.0)
+    duration = max(frame_count / meta_fps, 1.0) if meta_fps else None
 
     if not track_data:
         return _empty_result(video_path, duration, width, height,
-                             src_fps, frame_count, start_frame)
+                             meta_fps, frame_count, start_frame)
 
     _prog("Merging split tracks…")
     track_data = merge_same_person_tracks(dict(track_data), threshold=merge_threshold)
@@ -158,7 +163,7 @@ def run_tracking(video_path, start=None, end=None,
 
     if not track_data:
         return _empty_result(video_path, duration, width, height,
-                             src_fps, frame_count, start_frame)
+                             meta_fps, frame_count, start_frame)
 
     tracks = {}
     for tid, td in track_data.items():
@@ -195,7 +200,7 @@ def run_tracking(video_path, start=None, end=None,
         "video": video_path.name,
         "duration": duration,
         "frame_size": [width, height],
-        "src_fps": src_fps,
+        "src_fps": meta_fps,
         "frame_count": frame_count,
         "start_frame": start_frame,
         "end_frame": start_frame + frame_count,
