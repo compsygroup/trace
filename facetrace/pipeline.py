@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 from facetrace.config import (
-    DEFAULT_MIN_BOX_AREA, DEFAULT_MERGE_THRESHOLD, DEFAULT_MIN_FRAMES,
+    DEFAULT_MIN_BOX_AREA, DEFAULT_MERGE_THRESHOLD, DEFAULT_MIN_FRAMES, IBUG51,
 )
 from facetrace.landmarks import pipnet_lm68, lm68_to_5pt, align_arcface, img_b64
 from facetrace.models import get_models, build_tracker
@@ -160,9 +160,10 @@ def run_tracking(video_path, start=None, end=None,
 
     tracks = {}
     for tid, td in track_data.items():
-        # dense, zero-filled: element i = processed frame i
+        # dense, zero-filled: element i = processed frame i; bitbox format:
+        # bbox x y w h, landmarks ibug51 (51 x [x, y])
         bboxes = [[0, 0, 0, 0] for _ in range(frame_count)]
-        landmarks = [[[0.0, 0.0] for _ in range(68)] for _ in range(frame_count)]
+        landmarks = [[[0.0, 0.0] for _ in range(51)] for _ in range(frame_count)]
         det_conf = [0.0] * frame_count
         sub_ids = [None] * frame_count
         for f, bb, lm, c, s in zip(td["frames"], td["bboxes"], td["landmarks"],
@@ -170,9 +171,10 @@ def run_tracking(video_path, start=None, end=None,
             # merged sub-tracks may overlap by up to 0.3 s: keep the higher-confidence one
             if any(bboxes[f]) and det_conf[f] >= c:
                 continue
-            bboxes[f] = bb[:4]
+            x1, y1, x2, y2 = bb[:4]
+            bboxes[f] = [x1, y1, x2 - x1, y2 - y1]
             if lm is not None:
-                landmarks[f] = lm
+                landmarks[f] = lm[IBUG51]
             det_conf[f], sub_ids[f] = c, s
         tracks[str(tid)] = {
             "n_frames": sum(1 for b in bboxes if any(b)),

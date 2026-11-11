@@ -1,4 +1,4 @@
-"""facetrace — face detection + identity tracking + 68-point landmarks.
+"""facetrace — face detection + identity tracking + 51-point (ibug51) landmarks.
 
 Import the high-level entry point directly:
 
@@ -7,7 +7,6 @@ Import the high-level entry point directly:
     save_result(result, "clip_tracks.json")
 """
 from facetrace.pipeline import run_tracking, save_result  # noqa: F401
-from facetrace.export_3di import export_3di  # noqa: F401
 
 __version__ = "0.1.0"
-__all__ = ["run_tracking", "save_result", "export_3di"]
+__all__ = ["run_tracking", "save_result"]

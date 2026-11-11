@@ -52,6 +52,7 @@ LM68_RIGHT_EYE = list(range(42, 48))
 LM68_NOSE_TIP = 30
 LM68_MOUTH_L = 48
 LM68_MOUTH_R = 54
+IBUG51 = slice(17, 68)  # bitbox ibug51: iBUG-68 without the jaw (0-16)
 
 PIP_TF = T.Compose([
     T.ToTensor(),

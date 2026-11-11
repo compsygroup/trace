@@ -2,7 +2,7 @@
 
 **T**rack, **R**e-identify, **A**lign, **C**lean, **E**xport.
 
-Face detection, identity tracking, and 68-point landmarks for video. It detects
+Face detection, identity tracking, and 51-point (bitbox ibug51) landmarks for video. It detects
 faces in each frame, assigns a stable track id to each person across the clip, and
 outputs per-frame bounding boxes and landmarks.
 
@@ -13,7 +13,7 @@ outputs per-frame bounding boxes and landmarks.
 | 1 | Detection | YOLOv8-face (`yolov8n-face.pt`) | every frame; boxes below `min_box_area` dropped |
 | 2 | Tracking | BoT-SORT (Kalman + camera-motion comp.) | persistent integer track ids |
 | 3 | Re-ID | AdaFace IR-50 (512-D) | appearance matching inside the tracker |
-| 4 | Landmarks | PIPNet ResNet-18 (68-pt, 300W) | on the tracked crop, stored in full-frame coords |
+| 4 | Landmarks | PIPNet ResNet-18 (68-pt, 300W) | on the tracked crop; saved as ibug51 (jaw dropped) in full-frame coords |
 | 5 | Track merge | AdaFace + temporal + geometric gates | joins one identity split across gaps |
 | 6 | Cleanup | — | drops tracks shorter than `min_frames` |
 
@@ -33,11 +33,9 @@ Command line:
 python -m facetrace.cli clip.mp4 -o out/
 python -m facetrace.cli videos/*.mp4 -o out/ --min-box-area 1500
 python -m facetrace.cli session.mp4 -o out/ --start 5:00 --end 10:00   # segment only (also 300, or 0:05:00)
-python -m facetrace.cli clip.mp4 -o out/ --no-3di            # tracks JSON only
 ```
 
-Per video it writes `out/<stem>_tracks.json` plus the 3DI/bitbox files
-(`_rects.3DI` / `_landmarks.3DI`) for each identity. Use `--no-3di` to skip them.
+Per video it writes one file, `out/<stem>_tracks.json`.
 
 Python:
 
@@ -66,8 +64,8 @@ save_result(result, "clip_tracks.json")
       "median_area": 41000,
       "best_crop_b64": "data:image/jpeg;base64,...",  // largest crop thumbnail
       "det_conf":  [ 0.94, ... ],                      // YOLO confidence, 0.0 if not detected
-      "bboxes":    [ [x1, y1, x2, y2], ... ],          // absolute px, [0,0,0,0] if not detected
-      "landmarks": [ [[x, y], ...68], ... ],           // full-frame coords, all zeros if not detected
+      "bboxes":    [ [x, y, w, h], ... ],              // top-left + size, px; [0,0,0,0] if not detected
+      "landmarks": [ [[x, y], ...51], ... ],           // ibug51, full-frame px; all zeros if not detected
       "merged_from":   [3, 7],                         // original ids fused into this track
       "sub_track_ids": [ "3", "3", "7", null, ... ]    // origin id per frame, null if not detected
     }
@@ -106,35 +104,8 @@ trace/
 └── requirements.txt
 ```
 
-## 3DI / bitbox export
-
-By default the CLI writes one file pair per identity (`<tid>` is the track id);
-`--no-3di` disables it, and `facetrace.export_3di.export_3di(result, out_dir)`
-does the same from Python:
-
-| file | content |
-|------|---------|
-| `<stem>_id<tid>_rects.3DI` | `x y w h` (top-left + size, integer px) |
-| `<stem>_id<tid>_landmarks.3DI` | 51 landmarks = 102 fields, iBUG-68 inner face `pts68[17:68]` (no jaw, no z) |
-| `*.3DI.json` | sidecars with frame indices and coordinate space |
-
-These load with the bitbox readers
-([compsygroup/bitbox](https://github.com/compsygroup/bitbox)): `read_rectangles`
-returns `x y w h`, `read_landmarks` returns schema `ibug51`.
-
-Output is dense by default: one row per video frame `[0, frame_count)`, indexed by
-frame number. Frames with no detection for that identity are written as sentinels
-(`0 0 0 0` and `nan`).
-`--3di-sparse` writes one row per detection instead.
-
-By default every identity is exported; `--3di-track <id>` limits to one, and
-`--3di-dominant` to the largest track.
-
-Coordinates are raw-frame pixels. 3DI-lite runs on the undistorted
-`_preprocessed.mp4`, so the files are format-compatible but not pixel-registered to
-that output unless you undistort with the same camera model first.
-
 ## Notes
 
-- Landmarks in the JSON are iBUG-68 in full-frame coordinates; the `.3DI` export
-  keeps the 51-point inner-face subset.
+- Rects and landmarks use the bitbox formats ([compsygroup/bitbox](https://github.com/compsygroup/bitbox)):
+  `x y w h`, and `ibug51` = iBUG-68 points 17-67 (jaw 0-16 dropped).
+- Coordinates are raw-frame pixels (not camera-undistorted).
