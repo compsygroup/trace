@@ -11,6 +11,20 @@ from facetrace.models import get_models
 from facetrace.export_3di import export_3di
 
 
+def _time(s):
+    """Seconds, MM:SS or HH:MM:SS (fractions allowed) -> seconds."""
+    try:
+        parts = [float(p) for p in s.split(":")]
+    except ValueError:
+        parts = []
+    if not 1 <= len(parts) <= 3 or any(p < 0 for p in parts):
+        raise argparse.ArgumentTypeError(f"bad time {s!r}: use seconds, MM:SS or HH:MM:SS")
+    sec = 0.0
+    for p in parts:
+        sec = sec * 60 + p
+    return sec
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         prog="facetrace",
@@ -18,10 +32,10 @@ def main(argv=None):
     ap.add_argument("videos", nargs="+", type=Path, help="input video file(s)")
     ap.add_argument("-o", "--out", type=Path, default=Path("out"),
                     help="output directory for <stem>_tracks.json (default: ./out)")
-    ap.add_argument("--start-frame", type=int, default=0,
-                    help="first frame to process (default: 0)")
-    ap.add_argument("--end-frame", type=int, default=None,
-                    help="stop before this frame (exclusive; default: end of video)")
+    ap.add_argument("--start", type=_time, default=None,
+                    help="segment start: seconds, MM:SS or HH:MM:SS (default: start of video)")
+    ap.add_argument("--end", type=_time, default=None,
+                    help="segment end, exclusive (default: end of video)")
     ap.add_argument("--min-box-area", type=int, default=DEFAULT_MIN_BOX_AREA)
     ap.add_argument("--merge-threshold", type=float, default=DEFAULT_MERGE_THRESHOLD)
     ap.add_argument("--min-frames", type=int, default=DEFAULT_MIN_FRAMES)
@@ -49,7 +63,7 @@ def main(argv=None):
         print(f"[facetrace] {video.name}", flush=True)
         try:
             result = run_tracking(
-                video, start_frame=args.start_frame, end_frame=args.end_frame,
+                video, start=args.start, end=args.end,
                 min_box_area=args.min_box_area,
                 merge_threshold=args.merge_threshold, min_frames=args.min_frames,
                 save_thumbnails=not args.no_thumbnails, models=models,

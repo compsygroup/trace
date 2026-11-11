@@ -30,16 +30,17 @@ def _empty_result(video_path, duration, width, height, src_fps, frame_count, sta
     }
 
 
-def run_tracking(video_path, start_frame=0, end_frame=None,
+def run_tracking(video_path, start=None, end=None,
                  min_box_area=DEFAULT_MIN_BOX_AREA,
                  merge_threshold=DEFAULT_MERGE_THRESHOLD,
                  min_frames=DEFAULT_MIN_FRAMES,
                  save_thumbnails=True, models=None, device=None, progress=None):
-    """Process one video, or frames [start_frame, end_frame) of it, and return the
-    per-track detection/landmark result dict. Frame indices in the result are
-    relative to start_frame."""
-    if start_frame < 0 or (end_frame is not None and end_frame <= start_frame):
-        raise ValueError(f"invalid segment: start_frame={start_frame}, end_frame={end_frame}")
+    """Process one video, or the segment [start, end) seconds of it, and return the
+    per-track detection/landmark result dict. Times are converted to frames with
+    the native fps; frame indices in the result are relative to start_frame."""
+    if (start is not None and start < 0) or \
+            (end is not None and end <= (start or 0)):
+        raise ValueError(f"invalid segment: start={start}, end={end}")
     video_path = Path(video_path)
 
     def _prog(msg):
@@ -58,6 +59,10 @@ def run_tracking(video_path, start_frame=0, end_frame=None,
     n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    if (start is not None or end is not None) and not cap.get(cv2.CAP_PROP_FPS):
+        raise ValueError(f"{video_path.name}: no fps in metadata, cannot convert start/end times")
+    start_frame = round(start * src_fps) if start is not None else 0
+    end_frame = round(end * src_fps) if end is not None else None
     # skip to start_frame by decoding (grab), not seeking: CAP_PROP_POS_FRAMES
     # seeks are not frame-accurate on all codecs
     for _ in range(start_frame):

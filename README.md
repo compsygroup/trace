@@ -32,7 +32,7 @@ Command line:
 ```bash
 python -m facetrace.cli clip.mp4 -o out/
 python -m facetrace.cli videos/*.mp4 -o out/ --min-box-area 1500
-python -m facetrace.cli session.mp4 -o out/ --start-frame 9000 --end-frame 18000   # segment only
+python -m facetrace.cli session.mp4 -o out/ --start 5:00 --end 10:00   # segment only (also 300, or 0:05:00)
 python -m facetrace.cli clip.mp4 -o out/ --no-3di            # tracks JSON only
 ```
 
@@ -57,7 +57,7 @@ save_result(result, "clip_tracks.json")
   "frame_size": [1920, 1080],
   "src_fps": 30.0,              // native fps from container metadata
   "frame_count": 9000,          // frames processed
-  "start_frame": 9000,          // segment start in the full video
+  "start_frame": 9000,          // segment start in the full video (round(start * src_fps))
   "end_frame": 18000,           // segment end (exclusive); frame i here = full-video frame start_frame + i
   "n_tracks": 2,
   "tracks": {
@@ -83,8 +83,8 @@ Per-track arrays are dense: length = `frame_count`, index `i` = processed frame 
 
 | arg | default | meaning |
 |-----|---------|---------|
-| `--start-frame` | 0 | first frame to process |
-| `--end-frame` | end of video | stop before this frame (exclusive) |
+| `--start` | start of video | segment start: seconds, `MM:SS` or `HH:MM:SS` |
+| `--end` | end of video | segment end (exclusive), same formats |
 | `--min-box-area` | 1500 | discard detections smaller than this (px²) |
 | `--merge-threshold` | 0.40 | cosine similarity to merge two tracks into one identity |
 | `--min-frames` | 5 | drop tracks with fewer detected frames |
