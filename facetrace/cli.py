@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from facetrace.config import (
-    DEFAULT_SAMPLE_FPS, DEFAULT_MIN_BOX_AREA, DEFAULT_MERGE_THRESHOLD, DEFAULT_MIN_FRAMES,
+    DEFAULT_MIN_BOX_AREA, DEFAULT_MERGE_THRESHOLD, DEFAULT_MIN_FRAMES,
 )
 from facetrace.pipeline import run_tracking, save_result
 from facetrace.models import get_models
@@ -18,7 +18,6 @@ def main(argv=None):
     ap.add_argument("videos", nargs="+", type=Path, help="input video file(s)")
     ap.add_argument("-o", "--out", type=Path, default=Path("out"),
                     help="output directory for <stem>_tracks.json (default: ./out)")
-    ap.add_argument("--sample-fps", type=float, default=DEFAULT_SAMPLE_FPS)
     ap.add_argument("--min-box-area", type=int, default=DEFAULT_MIN_BOX_AREA)
     ap.add_argument("--merge-threshold", type=float, default=DEFAULT_MERGE_THRESHOLD)
     ap.add_argument("--min-frames", type=int, default=DEFAULT_MIN_FRAMES)
@@ -31,7 +30,7 @@ def main(argv=None):
     ap.add_argument("--3di-dominant", dest="di_dominant", action="store_true",
                     help="export only the dominant (largest) identity")
     ap.add_argument("--3di-sparse", dest="di_sparse", action="store_true",
-                    help="3DI: one row per sampled detection instead of dense per-frame")
+                    help="3DI: one row per detection instead of dense per-frame")
     args = ap.parse_args(argv)
 
     args.out.mkdir(parents=True, exist_ok=True)
@@ -46,7 +45,7 @@ def main(argv=None):
         print(f"[facetrace] {video.name}", flush=True)
         try:
             result = run_tracking(
-                video, sample_fps=args.sample_fps, min_box_area=args.min_box_area,
+                video, min_box_area=args.min_box_area,
                 merge_threshold=args.merge_threshold, min_frames=args.min_frames,
                 save_thumbnails=not args.no_thumbnails, models=models,
                 progress=lambda msg: print(f"  {msg}", flush=True))

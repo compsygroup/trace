@@ -10,7 +10,7 @@ outputs per-frame bounding boxes and landmarks.
 
 | # | Stage | Model | Notes |
 |---|-------|-------|-------|
-| 1 | Detection | YOLOv8-face (`yolov8n-face.pt`) | sampled at `sample_fps` (default 5); boxes below `min_box_area` dropped |
+| 1 | Detection | YOLOv8-face (`yolov8n-face.pt`) | every frame; boxes below `min_box_area` dropped |
 | 2 | Tracking | BoT-SORT (Kalman + camera-motion comp.) | persistent integer track ids |
 | 3 | Re-ID | AdaFace IR-50 (512-D) | appearance matching inside the tracker |
 | 4 | Landmarks | PIPNet ResNet-18 (68-pt, 300W) | on the tracked crop, stored in full-frame coords |
@@ -31,7 +31,7 @@ Command line:
 
 ```bash
 python -m facetrace.cli clip.mp4 -o out/
-python -m facetrace.cli videos/*.mp4 -o out/ --sample-fps 5 --min-box-area 1500
+python -m facetrace.cli videos/*.mp4 -o out/ --min-box-area 1500
 python -m facetrace.cli clip.mp4 -o out/ --no-3di            # tracks JSON only
 ```
 
@@ -43,7 +43,7 @@ Python:
 ```python
 from facetrace import run_tracking, save_result
 
-result = run_tracking("clip.mp4", sample_fps=5, min_box_area=1500)
+result = run_tracking("clip.mp4", min_box_area=1500)
 save_result(result, "clip_tracks.json")
 ```
 
@@ -54,14 +54,13 @@ save_result(result, "clip_tracks.json")
   "video": "clip.mp4",
   "duration": 55.0,              // seconds
   "frame_size": [1920, 1080],
-  "sample_fps": 5.0,            // effective sampled rate
+  "src_fps": 30.0,              // native fps from container metadata
   "n_tracks": 2,
   "tracks": {
     "<track_id>": {
       "n_frames": 240,
       "median_area": 41000,
       "best_crop_b64": "data:image/jpeg;base64,...",  // largest crop thumbnail
-      "times":     [ 0.0, 0.2, ... ],                 // seconds, per sampled frame
       "det_conf":  [ 0.94, ... ],                      // YOLO confidence
       "bboxes":    [ [x1, y1, x2, y2, fw, fh], ... ],  // absolute px + frame size
       "landmarks": [ [[x, y], ...68], ... ],           // full-frame coords, or null
@@ -72,16 +71,15 @@ save_result(result, "clip_tracks.json")
 }
 ```
 
-Arrays are frame-aligned: index `i` is the `i`-th sampled frame of that track.
+Arrays are frame-aligned: index `i` is the `i`-th detected frame of that track.
 
 ## Parameters
 
 | arg | default | meaning |
 |-----|---------|---------|
-| `--sample-fps` | 5.0 | frames analysed per second |
 | `--min-box-area` | 1500 | discard detections smaller than this (px²) |
 | `--merge-threshold` | 0.40 | cosine similarity to merge two tracks into one identity |
-| `--min-frames` | 5 | drop tracks with fewer sampled frames |
+| `--min-frames` | 5 | drop tracks with fewer detected frames |
 | `--no-thumbnails` | off | skip embedding track thumbnails |
 
 ## Layout
@@ -118,8 +116,7 @@ returns `x y w h`, `read_landmarks` returns schema `ibug51`.
 
 Output is dense by default: one row per video frame `[0, frame_count)`, indexed by
 frame number. Frames with no detection for that identity are written as sentinels
-(`0 0 0 0` and `nan`). Since the pipeline runs on sampled frames, most rows are
-sentinels unless you process every frame (set `--sample-fps` to the video fps).
+(`0 0 0 0` and `nan`).
 `--3di-sparse` writes one row per detection instead.
 
 By default every identity is exported; `--3di-track <id>` limits to one, and

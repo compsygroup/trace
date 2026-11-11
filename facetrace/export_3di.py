@@ -72,7 +72,6 @@ def _sidecar(result, track, kind, out_file, dense, n_rows):
         "n_rows": n_rows,
         "frame_count": result.get("frame_count"),
         "src_fps": result.get("src_fps"),
-        "sample_fps": result.get("sample_fps"),
         "detected_frames": track.get("frames", []),
         "source_video": result.get("video"),
         "frame_size": result.get("frame_size"),
