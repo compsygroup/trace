@@ -18,6 +18,10 @@ def main(argv=None):
     ap.add_argument("videos", nargs="+", type=Path, help="input video file(s)")
     ap.add_argument("-o", "--out", type=Path, default=Path("out"),
                     help="output directory for <stem>_tracks.json (default: ./out)")
+    ap.add_argument("--start-frame", type=int, default=0,
+                    help="first frame to process (default: 0)")
+    ap.add_argument("--end-frame", type=int, default=None,
+                    help="stop before this frame (exclusive; default: end of video)")
     ap.add_argument("--min-box-area", type=int, default=DEFAULT_MIN_BOX_AREA)
     ap.add_argument("--merge-threshold", type=float, default=DEFAULT_MERGE_THRESHOLD)
     ap.add_argument("--min-frames", type=int, default=DEFAULT_MIN_FRAMES)
@@ -45,7 +49,8 @@ def main(argv=None):
         print(f"[facetrace] {video.name}", flush=True)
         try:
             result = run_tracking(
-                video, min_box_area=args.min_box_area,
+                video, start_frame=args.start_frame, end_frame=args.end_frame,
+                min_box_area=args.min_box_area,
                 merge_threshold=args.merge_threshold, min_frames=args.min_frames,
                 save_thumbnails=not args.no_thumbnails, models=models,
                 progress=lambda msg: print(f"  {msg}", flush=True))

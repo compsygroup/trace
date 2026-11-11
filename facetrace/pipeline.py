@@ -16,23 +16,30 @@ from facetrace.models import get_models, build_tracker
 from facetrace.track_merger import merge_same_person_tracks
 
 
-def _empty_result(video_path, duration, width, height, src_fps, frame_count):
+def _empty_result(video_path, duration, width, height, src_fps, frame_count, start_frame):
     return {
         "video": Path(video_path).name,
         "duration": duration,
         "frame_size": [width, height],
         "src_fps": src_fps,
         "frame_count": frame_count,
+        "start_frame": start_frame,
+        "end_frame": start_frame + frame_count,
         "n_tracks": 0,
         "tracks": {},
     }
 
 
-def run_tracking(video_path, min_box_area=DEFAULT_MIN_BOX_AREA,
+def run_tracking(video_path, start_frame=0, end_frame=None,
+                 min_box_area=DEFAULT_MIN_BOX_AREA,
                  merge_threshold=DEFAULT_MERGE_THRESHOLD,
                  min_frames=DEFAULT_MIN_FRAMES,
                  save_thumbnails=True, models=None, device=None, progress=None):
-    """Process one video and return the per-track detection/landmark result dict."""
+    """Process one video, or frames [start_frame, end_frame) of it, and return the
+    per-track detection/landmark result dict. Frame indices in the result are
+    relative to start_frame."""
+    if start_frame < 0 or (end_frame is not None and end_frame <= start_frame):
+        raise ValueError(f"invalid segment: start_frame={start_frame}, end_frame={end_frame}")
     video_path = Path(video_path)
 
     def _prog(msg):
@@ -51,6 +58,12 @@ def run_tracking(video_path, min_box_area=DEFAULT_MIN_BOX_AREA,
     n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # skip to start_frame by decoding (grab), not seeking: CAP_PROP_POS_FRAMES
+    # seeks are not frame-accurate on all codecs
+    for _ in range(start_frame):
+        if not cap.grab():
+            break
+    n_seg = (min(end_frame, n_frames) if end_frame else n_frames) - start_frame
 
     track_data = defaultdict(lambda: dict(
         frames=[], times=[], areas=[], det_conf=[], bboxes=[], landmarks=[],
@@ -58,6 +71,8 @@ def run_tracking(video_path, min_box_area=DEFAULT_MIN_BOX_AREA,
 
     frame_idx, seen = 0, 0
     while cap.isOpened():
+        if end_frame is not None and start_frame + frame_idx >= end_frame:
+            break
         ret, frame = cap.read()
         if not ret:
             break
@@ -118,8 +133,8 @@ def run_tracking(video_path, min_box_area=DEFAULT_MIN_BOX_AREA,
 
         frame_idx += 1
         if frame_idx % 300 == 0:
-            pct = round(100 * frame_idx / max(n_frames, 1))
-            _prog(f"Frame {frame_idx}/{n_frames or '?'} ({pct}%) — {seen} faces tracked")
+            pct = round(100 * frame_idx / max(n_seg, 1))
+            _prog(f"Frame {frame_idx}/{n_seg if n_seg > 0 else '?'} ({pct}%) — {seen} faces tracked")
 
     cap.release()
     frame_count = frame_idx
@@ -127,7 +142,7 @@ def run_tracking(video_path, min_box_area=DEFAULT_MIN_BOX_AREA,
 
     if not track_data:
         return _empty_result(video_path, duration, width, height,
-                             src_fps, frame_count)
+                             src_fps, frame_count, start_frame)
 
     _prog("Merging split tracks…")
     track_data = merge_same_person_tracks(dict(track_data), threshold=merge_threshold)
@@ -136,7 +151,7 @@ def run_tracking(video_path, min_box_area=DEFAULT_MIN_BOX_AREA,
 
     if not track_data:
         return _empty_result(video_path, duration, width, height,
-                             src_fps, frame_count)
+                             src_fps, frame_count, start_frame)
 
     tracks = {}
     for tid, td in track_data.items():
@@ -159,6 +174,8 @@ def run_tracking(video_path, min_box_area=DEFAULT_MIN_BOX_AREA,
         "frame_size": [width, height],
         "src_fps": src_fps,
         "frame_count": frame_count,
+        "start_frame": start_frame,
+        "end_frame": start_frame + frame_count,
         "n_tracks": len(tracks),
         "tracks": tracks,
     }

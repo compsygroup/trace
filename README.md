@@ -32,6 +32,7 @@ Command line:
 ```bash
 python -m facetrace.cli clip.mp4 -o out/
 python -m facetrace.cli videos/*.mp4 -o out/ --min-box-area 1500
+python -m facetrace.cli session.mp4 -o out/ --start-frame 9000 --end-frame 18000   # segment only
 python -m facetrace.cli clip.mp4 -o out/ --no-3di            # tracks JSON only
 ```
 
@@ -55,6 +56,9 @@ save_result(result, "clip_tracks.json")
   "duration": 55.0,              // seconds
   "frame_size": [1920, 1080],
   "src_fps": 30.0,              // native fps from container metadata
+  "frame_count": 9000,          // frames processed
+  "start_frame": 9000,          // segment start in the full video
+  "end_frame": 18000,           // segment end (exclusive); frame i here = full-video frame start_frame + i
   "n_tracks": 2,
   "tracks": {
     "<track_id>": {
@@ -77,6 +81,8 @@ Arrays are frame-aligned: index `i` is the `i`-th detected frame of that track.
 
 | arg | default | meaning |
 |-----|---------|---------|
+| `--start-frame` | 0 | first frame to process |
+| `--end-frame` | end of video | stop before this frame (exclusive) |
 | `--min-box-area` | 1500 | discard detections smaller than this (px²) |
 | `--merge-threshold` | 0.40 | cosine similarity to merge two tracks into one identity |
 | `--min-frames` | 5 | drop tracks with fewer detected frames |
