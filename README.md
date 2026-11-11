@@ -65,17 +65,19 @@ save_result(result, "clip_tracks.json")
       "n_frames": 240,
       "median_area": 41000,
       "best_crop_b64": "data:image/jpeg;base64,...",  // largest crop thumbnail
-      "det_conf":  [ 0.94, ... ],                      // YOLO confidence
-      "bboxes":    [ [x1, y1, x2, y2, fw, fh], ... ],  // absolute px + frame size
-      "landmarks": [ [[x, y], ...68], ... ],           // full-frame coords, or null
+      "det_conf":  [ 0.94, ... ],                      // YOLO confidence, 0.0 if not detected
+      "bboxes":    [ [x1, y1, x2, y2], ... ],          // absolute px, [0,0,0,0] if not detected
+      "landmarks": [ [[x, y], ...68], ... ],           // full-frame coords, all zeros if not detected
       "merged_from":   [3, 7],                         // original ids fused into this track
-      "sub_track_ids": [ "3", "3", "7", ... ]          // origin id per frame
+      "sub_track_ids": [ "3", "3", "7", null, ... ]    // origin id per frame, null if not detected
     }
   }
 }
 ```
 
-Arrays are frame-aligned: index `i` is the `i`-th detected frame of that track.
+Per-track arrays are dense: length = `frame_count`, index `i` = processed frame `i`
+(full-video frame `start_frame + i`). Undetected frames are zero-filled.
+`n_frames` counts detected (non-zero) frames.
 
 ## Parameters
 

@@ -43,24 +43,14 @@ def _lm_row(lm, prec=3):
     return " ".join(vals)
 
 
-def _rows(track, frame_count, dense, prec):
-    bboxes = track.get("bboxes", [])
-    landmarks = track.get("landmarks", [])
-    frames = track.get("frames", [])
-
-    if dense and frame_count and frames and len(frames) == len(bboxes):
-        rects = [_RECT_SENTINEL] * frame_count
-        lms = [_LM_SENTINEL] * frame_count
-        for i, fi in enumerate(frames):
-            if 0 <= fi < frame_count:
-                rects[fi] = _rect_row(bboxes[i])
-                lms[fi] = _lm_row(landmarks[i] if i < len(landmarks) else None, prec)
-        return rects, lms
-
-    rects = [_rect_row(b) for b in bboxes]
-    lms = [_lm_row(landmarks[i] if i < len(landmarks) else None, prec)
-           for i in range(len(bboxes))]
-    return rects, lms
+def _rows(track, dense, prec):
+    """Track arrays are dense and zero-filled; zero rows become sentinels."""
+    rows = [(_rect_row(b), _lm_row(lm, prec) if any(v for p in lm for v in p) else _LM_SENTINEL)
+            if any(b) else (_RECT_SENTINEL, _LM_SENTINEL)
+            for b, lm in zip(track["bboxes"], track["landmarks"])]
+    if not dense:
+        rows = [r for r in rows if r[0] != _RECT_SENTINEL]
+    return [r for r, _ in rows], [lm for _, lm in rows]
 
 
 def _sidecar(result, track, kind, out_file, dense, n_rows):
@@ -72,7 +62,7 @@ def _sidecar(result, track, kind, out_file, dense, n_rows):
         "n_rows": n_rows,
         "frame_count": result.get("frame_count"),
         "src_fps": result.get("src_fps"),
-        "detected_frames": track.get("frames", []),
+        "detected_frames": [i for i, b in enumerate(track["bboxes"]) if any(b)],
         "source_video": result.get("video"),
         "frame_size": result.get("frame_size"),
         "output": out_file.name,
@@ -85,19 +75,18 @@ def export_3di(result, out_dir, stem=None, track_id=None, dominant_only=False,
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     base = stem or Path(result.get("video", "video")).stem
-    frame_count = result.get("frame_count")
     keys = _select_tracks(result, track_id, dominant_only)
     written = []
 
     for k in keys:
         track = result["tracks"][k]
-        rects, lms = _rows(track, frame_count, dense, prec)
+        rects, lms = _rows(track, dense, prec)
 
         rects_path = out_dir / f"{base}_id{k}_rects.3DI"
         lm_path = out_dir / f"{base}_id{k}_landmarks.3DI"
         rects_path.write_text("\n".join(rects) + "\n")
         lm_path.write_text("\n".join(lms) + "\n")
-        used_dense = dense and bool(frame_count) and bool(track.get("frames"))
+        used_dense = dense
         (out_dir / f"{rects_path.name}.json").write_text(
             json.dumps(_sidecar(result, track, "rects", rects_path, used_dense, len(rects)), indent=2))
         (out_dir / f"{lm_path.name}.json").write_text(

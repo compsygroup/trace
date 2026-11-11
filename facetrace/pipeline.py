@@ -155,17 +155,30 @@ def run_tracking(video_path, start_frame=0, end_frame=None,
 
     tracks = {}
     for tid, td in track_data.items():
+        # dense, zero-filled: element i = processed frame i
+        bboxes = [[0, 0, 0, 0] for _ in range(frame_count)]
+        landmarks = [[[0.0, 0.0] for _ in range(68)] for _ in range(frame_count)]
+        det_conf = [0.0] * frame_count
+        sub_ids = [None] * frame_count
+        for f, bb, lm, c, s in zip(td["frames"], td["bboxes"], td["landmarks"],
+                                   td["det_conf"], td["sub_track_ids"]):
+            # merged sub-tracks may overlap by up to 0.3 s: keep the higher-confidence one
+            if any(bboxes[f]) and det_conf[f] >= c:
+                continue
+            bboxes[f] = bb[:4]
+            if lm is not None:
+                landmarks[f] = lm
+            det_conf[f], sub_ids[f] = c, s
         tracks[str(tid)] = {
-            "n_frames": td.get("n_frames", len(td["times"])),
+            "n_frames": sum(1 for b in bboxes if any(b)),
             "median_area": td.get("median_area",
                                   int(statistics.median(td["areas"])) if td.get("areas") else 0),
             "best_crop_b64": td.get("best_crop_b64", ""),
-            "frames": td.get("frames", []),
-            "det_conf": td.get("det_conf", []),
-            "bboxes": td.get("bboxes", []),
-            "landmarks": td.get("landmarks", []),
+            "det_conf": det_conf,
+            "bboxes": bboxes,
+            "landmarks": landmarks,
             "merged_from": td.get("merged_from", [tid]),
-            "sub_track_ids": td.get("sub_track_ids", []),
+            "sub_track_ids": sub_ids,
         }
 
     return {
@@ -192,6 +205,10 @@ def _sanitize(o):
 
 
 def save_result(result, out_path):
+    n = result["frame_count"]
+    for tid, t in result["tracks"].items():
+        assert len(t["bboxes"]) == len(t["landmarks"]) == n, \
+            f"track {tid}: {len(t['bboxes'])} bboxes, {len(t['landmarks'])} landmarks, {n} frames"
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(_sanitize(result)))
