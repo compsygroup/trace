@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 from facetrace.config import (
-    DEFAULT_MIN_BOX_AREA, DEFAULT_MERGE_THRESHOLD, DEFAULT_MIN_FRAMES, IBUG51,
+    DEFAULT_MIN_BOX_AREA, DEFAULT_MERGE_THRESHOLD, DEFAULT_MIN_TRACK_FRAMES, IBUG51,
 )
 from facetrace.landmarks import pipnet_lm68, lm68_to_5pt, align_arcface, img_b64
 from facetrace.models import get_models, build_tracker
@@ -33,7 +33,7 @@ def _empty_result(video_path, duration, width, height, src_fps, frame_count, sta
 def run_tracking(video_path, start=None, end=None,
                  min_box_area=DEFAULT_MIN_BOX_AREA,
                  merge_threshold=DEFAULT_MERGE_THRESHOLD,
-                 min_frames=DEFAULT_MIN_FRAMES,
+                 min_track_frames=DEFAULT_MIN_TRACK_FRAMES,
                  save_thumbnail=False, models=None, device=None, progress=None):
     """Process one video, or the segment [start, end) seconds of it, and return the
     per-track detection/landmark result dict. Times are converted to frames with
@@ -151,8 +151,10 @@ def run_tracking(video_path, start=None, end=None,
 
     _prog("Merging split tracks…")
     track_data = merge_same_person_tracks(dict(track_data), threshold=merge_threshold)
+    # detected frames = distinct frame indices (merged sub-tracks can share a frame);
+    # equals the non-zero rows of the dense bboxes below
     track_data = {t: td for t, td in track_data.items()
-                  if len(td.get("times", [])) >= min_frames}
+                  if len(set(td["frames"])) >= min_track_frames}
 
     if not track_data:
         return _empty_result(video_path, duration, width, height,

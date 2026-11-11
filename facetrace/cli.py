@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from facetrace.config import (
-    DEFAULT_MIN_BOX_AREA, DEFAULT_MERGE_THRESHOLD, DEFAULT_MIN_FRAMES,
+    DEFAULT_MIN_BOX_AREA, DEFAULT_MERGE_THRESHOLD, DEFAULT_MIN_TRACK_FRAMES,
 )
 from facetrace.pipeline import run_tracking, save_result
 from facetrace.models import get_models
@@ -37,7 +37,8 @@ def main(argv=None):
                     help="segment end, exclusive (default: end of video)")
     ap.add_argument("--min-box-area", type=int, default=DEFAULT_MIN_BOX_AREA)
     ap.add_argument("--merge-threshold", type=float, default=DEFAULT_MERGE_THRESHOLD)
-    ap.add_argument("--min-frames", type=int, default=DEFAULT_MIN_FRAMES)
+    ap.add_argument("--min-track-frames", type=int, default=DEFAULT_MIN_TRACK_FRAMES,
+                    help="drop tracks detected in fewer frames than this")
     ap.add_argument("--save-thumbnail", action="store_true",
                     help="embed each track's largest face crop (base64 JPEG) in the JSON")
     args = ap.parse_args(argv)
@@ -56,7 +57,7 @@ def main(argv=None):
             result = run_tracking(
                 video, start=args.start, end=args.end,
                 min_box_area=args.min_box_area,
-                merge_threshold=args.merge_threshold, min_frames=args.min_frames,
+                merge_threshold=args.merge_threshold, min_track_frames=args.min_track_frames,
                 save_thumbnail=args.save_thumbnail, models=models,
                 progress=lambda msg: print(f"  {msg}", flush=True))
             out_path = save_result(result, args.out / f"{video.stem}_tracks.json")
