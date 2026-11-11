@@ -155,15 +155,12 @@ def merge_same_person_tracks(track_data: dict, threshold: float = 0.40) -> dict:
                          if track_data[t].get("times") else 0)
         buckets = {k: [] for k in _FRAME_KEYS}
         best_crop_b64, best_area = "", 0
-        sub_crops: dict = {}
         for t in group_s:
             td = track_data[t]
             nf = len(td.get("times", []))
             for k in _FRAME_KEYS:
                 default = [str(t)] * nf if k == "sub_track_ids" else [None] * nf
                 buckets[k].extend(td.get(k, default))
-            if td.get("best_crop_b64"):
-                sub_crops[str(t)] = td["best_crop_b64"]
             mx = max(td["areas"]) if td.get("areas") else 0
             if mx > best_area:
                 best_area, best_crop_b64 = mx, td.get("best_crop_b64", "")
@@ -174,7 +171,7 @@ def merge_same_person_tracks(track_data: dict, threshold: float = 0.40) -> dict:
             best_crop_b64=best_crop_b64, best_area=best_area,
             n_frames=len(buckets["times"]),
             median_area=int(statistics.median(buckets["areas"])) if buckets["areas"] else 0,
-            merged_from=sorted(group), sub_crops=sub_crops,
+            merged_from=sorted(group),
         )
         new_data[new_tid] = merged
 

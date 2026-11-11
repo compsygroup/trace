@@ -62,7 +62,7 @@ save_result(result, "clip_tracks.json")
     "<track_id>": {
       "n_frames": 240,
       "median_area": 41000,
-      "best_crop_b64": "data:image/jpeg;base64,...",  // largest crop thumbnail
+      "best_crop_b64": "data:image/jpeg;base64,...",  // only with --save-thumbnail: largest face crop
       "det_conf":  [ 0.94, ... ],                      // YOLO confidence, 0.0 if not detected
       "bboxes":    [ [x, y, w, h], ... ],              // top-left + size, px; [0,0,0,0] if not detected
       "landmarks": [ [[x, y], ...51], ... ],           // ibug51, full-frame px; all zeros if not detected
@@ -86,7 +86,7 @@ Per-track arrays are dense: length = `frame_count`, index `i` = processed frame 
 | `--min-box-area` | 1500 | discard detections smaller than this (px²) |
 | `--merge-threshold` | 0.40 | cosine similarity to merge two tracks into one identity |
 | `--min-frames` | 5 | drop tracks with fewer detected frames |
-| `--no-thumbnails` | off | skip embedding track thumbnails |
+| `--save-thumbnail` | off | embed each track's largest face crop (160x160 base64 JPEG) |
 
 ## Layout
 
@@ -103,9 +103,3 @@ trace/
 ├── weights/             # model checkpoints (downloaded separately)
 └── requirements.txt
 ```
-
-## Notes
-
-- Rects and landmarks use the bitbox formats ([compsygroup/bitbox](https://github.com/compsygroup/bitbox)):
-  `x y w h`, and `ibug51` = iBUG-68 points 17-67 (jaw 0-16 dropped).
-- Coordinates are raw-frame pixels (not camera-undistorted).

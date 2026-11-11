@@ -38,8 +38,8 @@ def main(argv=None):
     ap.add_argument("--min-box-area", type=int, default=DEFAULT_MIN_BOX_AREA)
     ap.add_argument("--merge-threshold", type=float, default=DEFAULT_MERGE_THRESHOLD)
     ap.add_argument("--min-frames", type=int, default=DEFAULT_MIN_FRAMES)
-    ap.add_argument("--no-thumbnails", action="store_true",
-                    help="do not embed track thumbnail JPEGs in the output")
+    ap.add_argument("--save-thumbnail", action="store_true",
+                    help="embed each track's largest face crop (base64 JPEG) in the JSON")
     args = ap.parse_args(argv)
 
     args.out.mkdir(parents=True, exist_ok=True)
@@ -57,7 +57,7 @@ def main(argv=None):
                 video, start=args.start, end=args.end,
                 min_box_area=args.min_box_area,
                 merge_threshold=args.merge_threshold, min_frames=args.min_frames,
-                save_thumbnails=not args.no_thumbnails, models=models,
+                save_thumbnail=args.save_thumbnail, models=models,
                 progress=lambda msg: print(f"  {msg}", flush=True))
             out_path = save_result(result, args.out / f"{video.stem}_tracks.json")
             print(f"  -> {out_path}  ({result['n_tracks']} tracks)", flush=True)

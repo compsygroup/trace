@@ -34,7 +34,7 @@ def run_tracking(video_path, start=None, end=None,
                  min_box_area=DEFAULT_MIN_BOX_AREA,
                  merge_threshold=DEFAULT_MERGE_THRESHOLD,
                  min_frames=DEFAULT_MIN_FRAMES,
-                 save_thumbnails=True, models=None, device=None, progress=None):
+                 save_thumbnail=False, models=None, device=None, progress=None):
     """Process one video, or the segment [start, end) seconds of it, and return the
     per-track detection/landmark result dict. Times are converted to frames with
     the native fps; frame indices in the result are relative to start_frame."""
@@ -116,7 +116,7 @@ def run_tracking(video_path, start=None, end=None,
                 td["det_conf"].append(conf)
                 td["bboxes"].append([x1, y1, x2, y2, width, height])
                 td["landmarks"].append(lm68_frame)
-                if save_thumbnails and area > td["best_area"]:
+                if save_thumbnail and area > td["best_area"]:
                     td["best_area"] = area
                     td["best_crop_b64"] = img_b64(cv2.resize(crop, (160, 160)))
 
@@ -180,13 +180,14 @@ def run_tracking(video_path, start=None, end=None,
             "n_frames": sum(1 for b in bboxes if any(b)),
             "median_area": td.get("median_area",
                                   int(statistics.median(td["areas"])) if td.get("areas") else 0),
-            "best_crop_b64": td.get("best_crop_b64", ""),
             "det_conf": det_conf,
             "bboxes": bboxes,
             "landmarks": landmarks,
             "merged_from": td.get("merged_from", [tid]),
             "sub_track_ids": sub_ids,
         }
+        if save_thumbnail:
+            tracks[str(tid)]["best_crop_b64"] = td.get("best_crop_b64", "")
 
     return {
         "video": video_path.name,
